@@ -1,0 +1,19 @@
+# Binaries
+goforge
+goforge.exe
+
+# Build output
+dist/
+build/
+
+# Coverage
+coverage.out
+coverage.html
+
+# IDE
+.idea/
+.vscode/
+
+# OS
+.DS_Store
+Thumbs.db
