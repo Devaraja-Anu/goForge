@@ -18,6 +18,7 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 
 	"github.com/devaraja-anu/blueprint/internal/config"
+	"github.com/devaraja-anu/blueprint/internal/db"
 )
 
 type application struct {
@@ -25,11 +26,12 @@ type application struct {
 	logger   *slog.Logger
 	db       *pgxpool.Pool
 	wg       sync.WaitGroup
+	queries  *db.Queries
 	validate *validator.Validate
 }
 
 func NewApplication(cfg config.Config, log *slog.Logger, database *pgxpool.Pool,
-
+	queries *db.Queries,
 ) *application {
 
 	v := validator.New()
@@ -49,6 +51,7 @@ func NewApplication(cfg config.Config, log *slog.Logger, database *pgxpool.Pool,
 		logger:   log,
 		db:       database,
 		validate: v,
+		queries:  queries,
 	}
 }
 

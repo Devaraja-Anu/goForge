@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log/slog"
 	"os"
+	"strconv"
 	"strings"
 
 	"github.com/joho/godotenv"
@@ -19,6 +20,8 @@ type Config struct {
 	AppEnv            AppEnv
 	FrontendURL       string
 	TrustProxyHeaders bool
+	DBMaxConns        int32
+	DBMinConns        int32
 }
 
 func (s secret) LogValue() slog.Value {
@@ -42,12 +45,19 @@ func Load() (Config, error) {
 		}
 	}
 
+	trustProxyHeaders, err := strconv.ParseBool(getEnv("TRUST_PROXY_HEADERS", "false"))
+	if err != nil {
+		return Config{}, fmt.Errorf("invalid TRUST_PROXY_HEADERS: %w", err)
+	}
+
 	cfg := Config{
 		AppEnv:            AppEnv(envApp),
 		DatabaseURL:       secret(os.Getenv("DATABASE_URL")),
 		FrontendURL:       getEnv("FRONTEND_URL", "http://localhost:3000"),
 		Port:              getEnv("PORT", "8080"),
-		TrustProxyHeaders: getEnv("TRUST_PROXY_HEADERS", "false") == "true",
+		DBMaxConns:        getEnvInt("DB_MAX_CONNS", 25),
+		DBMinConns:        getEnvInt("DB_MIN_CONNS", 5),
+		TrustProxyHeaders: trustProxyHeaders,
 	}
 
 	if err := cfg.validate(); err != nil {
@@ -72,6 +82,18 @@ func (c Config) validate() error {
 		return fmt.Errorf("missing required env variables: %s", strings.Join(missing, ","))
 	}
 
+	if c.DBMinConns > c.DBMaxConns {
+		return fmt.Errorf("minimum DB connections cannot be greater than max connections")
+	}
+
+	if c.DBMinConns < 0 {
+		return fmt.Errorf("minimum DB connections should not be less than 0")
+	}
+
+	if c.DBMaxConns <= 0 {
+		return fmt.Errorf("max DB connections should be greater than 0")
+	}
+
 	return nil
 }
 
@@ -81,4 +103,19 @@ func getEnv(key, fallback string) string {
 		return v
 	}
 	return fallback
+}
+
+func getEnvInt(key string, fallback int32) int32 {
+
+	v := os.Getenv(key)
+	if v == "" {
+		return fallback
+	}
+
+	val, err := strconv.ParseInt(v, 10, 32)
+	if err != nil {
+		return fallback
+	}
+
+	return int32(val)
 }

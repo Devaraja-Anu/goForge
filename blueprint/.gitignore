@@ -1,0 +1,17 @@
+# Build output (created by `make build`)
+/bin/
+
+# Local environment overrides — never commit real secrets
+.env
+
+# Go build/test artifacts
+*.test
+*.out
+
+# OS-specific
+.DS_Store
+Thumbs.db
+
+# Editor/IDE
+.vscode/
+.idea/

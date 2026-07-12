@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"net"
 	"net/http"
 	"strconv"
 	"strings"
@@ -162,6 +163,29 @@ func pageParams(r *http.Request) (int, int) {
 
 	offset := (page - 1) * size
 	return size, offset
+}
+
+func (app *application) ClientIP(r *http.Request) string {
+	if app.config.TrustProxyHeaders {
+		if xff := r.Header.Get("X-Forwarded-For"); xff != "" {
+			// XFF can be a comma-separated chain (client, proxy1, proxy2...);
+			// the leftmost entry is the original client.
+			if parts := strings.Split(xff, ","); len(parts) > 0 {
+				if ip := strings.TrimSpace(parts[0]); ip != "" {
+					return ip
+				}
+			}
+		}
+		if realIP := r.Header.Get("X-Real-IP"); realIP != "" {
+			return realIP
+		}
+	}
+
+	host, _, err := net.SplitHostPort(r.RemoteAddr)
+	if err != nil {
+		return r.RemoteAddr // malformed — return as-is rather than erroring
+	}
+	return host
 }
 
 func toPgUUID(id uuid.UUID) pgtype.UUID {
