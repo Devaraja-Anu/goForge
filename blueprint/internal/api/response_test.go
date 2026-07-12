@@ -219,6 +219,38 @@ func TestValidationError(t *testing.T) {
 	})
 }
 
+func TestServerError(t *testing.T) {
+	// application.logger is unused by serverError itself — it logs via
+	// logger.FromContext(r.Context()), which falls back to slog.Default()
+	// when no logger has been attached to the context (confirmed via
+	// internal/logger's FromContext implementation). A zero-value
+	// application is therefore safe to use here.
+	app := &application{}
+
+	w := httptest.NewRecorder()
+	r := httptest.NewRequest("GET", "/", nil)
+
+	app.serverError(w, r, errors.New("db connection lost"))
+
+	if w.Code != http.StatusInternalServerError {
+		t.Errorf("status = %d, want %d", w.Code, http.StatusInternalServerError)
+	}
+
+	body := decodeEnvelope(t, w)
+	errObj, ok := body["error"].(map[string]any)
+	if !ok {
+		t.Fatalf("expected \"error\" object in body, got %v", body)
+	}
+	if code, _ := errObj["code"].(string); code != "server_error" {
+		t.Errorf("code = %q, want server_error", code)
+	}
+	// Message is intentionally generic and must never leak the underlying
+	// error string to the client.
+	if msg, _ := errObj["message"].(string); msg == "db connection lost" {
+		t.Error("serverError must not leak the underlying error message to the client")
+	}
+}
+
 func TestValidationMessage(t *testing.T) {
 	type testStruct struct {
 		Name string `json:"name" validate:"required,min=3"`
