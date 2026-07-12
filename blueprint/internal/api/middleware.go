@@ -8,7 +8,6 @@ import (
 	"github.com/devaraja-anu/blueprint/internal/logger"
 )
 
-
 func recoverer(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		defer func() {

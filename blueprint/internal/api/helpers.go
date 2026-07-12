@@ -10,10 +10,11 @@ import (
 	"strings"
 	"time"
 
-	"github.com/devaraja-anu/blueprint/internal/logger"
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgtype"
+
+	"github.com/devaraja-anu/blueprint/internal/logger"
 )
 
 const (
@@ -191,4 +192,21 @@ func fromPgTimestamptz(t pgtype.Timestamptz) *time.Time {
 		return nil
 	}
 	return &t.Time
+}
+
+func (app *application) backgroundFn(fn func()) {
+	app.wg.Add(1)
+
+	go func() {
+		defer app.wg.Done()
+
+		defer func() {
+			err := recover()
+			if err != nil {
+				app.logger.Error("background task panicked", "error", fmt.Errorf("%v", err))
+			}
+		}()
+
+		fn()
+	}()
 }

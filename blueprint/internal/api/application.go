@@ -14,9 +14,10 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/devaraja-anu/blueprint/internal/config"
 	"github.com/go-playground/validator/v10"
 	"github.com/jackc/pgx/v5/pgxpool"
+
+	"github.com/devaraja-anu/blueprint/internal/config"
 )
 
 type application struct {
@@ -98,21 +99,4 @@ func (app *application) Serve() error {
 
 	app.logger.Info("server stopped", "addr", srv.Addr)
 	return nil
-}
-
-func (app *application) backgroundFn(fn func()) {
-	app.wg.Add(1)
-
-	go func() {
-		defer app.wg.Done()
-
-		defer func() {
-			err := recover()
-			if err != nil {
-				app.logger.Error("background task panicked", "error", fmt.Errorf("%v", err))
-			}
-		}()
-
-		fn()
-	}()
 }

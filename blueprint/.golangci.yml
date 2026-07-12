@@ -16,10 +16,18 @@ linters:
     gosec:
       excludes:
         - G104
+
     errorlint:
       errorf: true
       asserts: true
       comparison: true
+
+  exclusions:
+    warn-unused: true
+    rules:
+      - path: internal/api/(helpers|response)\.go
+        linters:
+          - unused
 
 formatters:
   enable:

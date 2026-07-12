@@ -4,10 +4,11 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/devaraja-anu/blueprint/internal/logger"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/go-chi/cors"
+
+	"github.com/devaraja-anu/blueprint/internal/logger"
 )
 
 func (app *application) routes() http.Handler {
@@ -25,7 +26,7 @@ func (app *application) routes() http.Handler {
 	}))
 	r.Use(timeoutMiddleware(10 * time.Second))
 
-	r.Get("/v1/healthcheck", app.healthCheck)
+	r.Get("/healthcheck", app.healthCheck)
 
 	return r
 }
