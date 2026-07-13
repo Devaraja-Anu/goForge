@@ -1,0 +1,48 @@
+version: "2"
+
+linters:
+  default: standard
+
+  enable:
+    - sqlclosecheck
+    - rowserrcheck
+    - errorlint
+    - nilerr
+    - gosec
+    - noctx
+    - unconvert
+
+  settings:
+    gosec:
+      excludes:
+        - G104
+
+    errorlint:
+      errorf: true
+      asserts: true
+      comparison: true
+
+  exclusions:
+    warn-unused: true
+    rules:
+      - path: internal/api/(helpers|response)\.go
+        linters:
+          - unused
+
+      - path: '_test\.go'
+        linters:
+          - noctx
+        text: "httptest.NewRequest"
+
+formatters:
+  enable:
+    - gofmt
+    - goimports
+  settings:
+    goimports:
+      local-prefixes:
+        - github.com/devaraja-anu/blueprint
+
+issues:
+  max-issues-per-linter: 0
+  max-same-issues: 0

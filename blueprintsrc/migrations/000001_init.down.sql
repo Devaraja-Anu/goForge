@@ -1,0 +1,2 @@
+-- Intentionally empty. Reverses 000001_init.up.sql (which made no
+-- schema changes).

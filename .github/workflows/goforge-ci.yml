@@ -1,0 +1,79 @@
+name: goforge-ci
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+
+      - name: Verify blueprintsrc/ is in sync with blueprint/
+        run: make check-blueprint-sync
+
+      - name: Check formatting
+        run: |
+          if [ -n "$(gofmt -l .)" ]; then
+            echo "error: the following files are not gofmt'd:"
+            gofmt -l .
+            exit 1
+          fi
+
+      - name: Build goforge
+        run: go build -o bin/goforge ./cmd/goforge
+
+      - name: Vet
+        run: go vet ./...
+
+      - name: Test
+        run: go test ./...
+
+  golden-file-smoke-test:
+    runs-on: ubuntu-latest
+    needs: build-and-test
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+
+      - name: Build goforge
+        run: go build -o bin/goforge ./cmd/goforge
+
+      - name: Generate a project into a temp dir
+        run: |
+          OUT="$RUNNER_TEMP/goldenapp"
+          ./bin/goforge new goldenapp --module github.com/goforge-ci/goldenapp \
+            && mv goldenapp "$OUT" \
+            && echo "GENERATED_DIR=$OUT" >> "$GITHUB_ENV"
+
+      - name: Build generated project
+        working-directory: ${{ env.GENERATED_DIR }}
+        run: go build ./...
+
+      - name: Vet generated project
+        working-directory: ${{ env.GENERATED_DIR }}
+        run: go vet ./...
+
+      - name: Test generated project
+        working-directory: ${{ env.GENERATED_DIR }}
+        run: go test ./...
+
+      - name: Check for leaked blueprint/goforge references
+        working-directory: ${{ env.GENERATED_DIR }}
+        run: |
+          if grep -rn "devaraja-anu/blueprint\|goforge\." --include="*.go" .; then
+            echo "error: generated project contains leftover blueprint/goforge references"
+            exit 1
+          fi
+
+      - name: Docker build generated project
+        working-directory: ${{ env.GENERATED_DIR }}
+        run: docker build -t goldenapp:ci .
