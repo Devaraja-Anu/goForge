@@ -13,6 +13,10 @@ func (app *application) healthCheck(w http.ResponseWriter, r *http.Request) {
 
 	checkers := map[string]func(context.Context) error{
 		"database": app.db.Ping,
+		"query_layer": func(ctx context.Context) error {
+			_, err := app.queries.Ping(ctx)
+			return err
+		},
 	}
 
 	checks := make(map[string]string, len(checkers))
