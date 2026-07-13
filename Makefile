@@ -41,8 +41,8 @@ VERSION ?= dev
 
 ## sync-blueprint: regenerate blueprintsrc/ (embeddable, go.mod-less mirror of blueprint/)
 sync-blueprint:
-	@./scripts/sync-blueprint.sh
-
+	@bash scripts/sync-blueprint.sh
+	
 ## check-blueprint-sync: fail if blueprintsrc/ has drifted from blueprint/
 check-blueprint-sync: sync-blueprint
 	@git diff --exit-code blueprintsrc/ || { \
