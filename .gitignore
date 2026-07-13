@@ -1,6 +1,5 @@
 # Binaries
-goforge
-goforge.exe
+/bin/
 
 # Build output
 dist/
